@@ -528,6 +528,6 @@ MIT License - See LICENSE file
 
 ---
 
-**Made with ❤️ by the team**
+**Made with ❤️ by the simba**
 
 آخرین به‌روزرسانی: 29 دسامبر 2025

@@ -1,0 +1,159 @@
+<!-- @format -->
+
+<!DOCTYPE html>
+<html lang="fa">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SEO Tracker - ساده</title>
+    <style>
+      body {
+        font-family: Tahoma, Arial;
+        padding: 16px;
+      }
+      input,
+      button,
+      select {
+        padding: 8px;
+        margin: 4px;
+      }
+      .row {
+        margin-bottom: 12px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td,
+      th {
+        border: 1px solid #ddd;
+        padding: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>SEO Tracker (ساده)</h2>
+
+    <div class="row">
+      <button id="refreshProjects">بارگذاری پروژه‌ها</button>
+      <select id="projects"></select>
+      <button id="newProject">ایجاد پروژه</button>
+    </div>
+
+    <div class="row">
+      <input
+        id="newProjectName"
+        placeholder="نام پروژه (مثال: Digikala Tracker)"
+      />
+      <input id="newProjectDomain" placeholder="دامنه (مثال: digikala.ir)" />
+    </div>
+
+    <div class="row">
+      <button id="refreshKeywords">بارگذاری کیوردها</button>
+      <select id="keywords"></select>
+      <input id="newKeywordText" placeholder="کیورد جدید" />
+      <button id="addKeyword">افزودن کیورد</button>
+    </div>
+
+    <div class="row">
+      <button id="refreshResults">نمایش نتایج</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+      const api = (path) => "/api" + path;
+
+      async function loadProjects() {
+        const res = await fetch(api("/projects"));
+        const data = await res.json();
+        const sel = document.getElementById("projects");
+        sel.innerHTML = "";
+        data.forEach((p) => {
+          const o = document.createElement("option");
+          o.value = p.id;
+          o.textContent = p.name + " (" + (p.domain?.host || "") + ")";
+          sel.appendChild(o);
+        });
+      }
+
+      async function loadKeywords() {
+        const pid = document.getElementById("projects").value;
+        if (!pid) return;
+        const res = await fetch(api("/projects/" + pid + "/keywords"));
+        const data = await res.json();
+        const sel = document.getElementById("keywords");
+        sel.innerHTML = "";
+        data.forEach((k) => {
+          const o = document.createElement("option");
+          o.value = k.id;
+          o.textContent = k.keyword;
+          sel.appendChild(o);
+        });
+      }
+
+      async function loadResults() {
+        const pid = document.getElementById("projects").value;
+        const res = await fetch(
+          api("/results" + (pid ? "?project_id=" + pid : ""))
+        );
+        const data = await res.json();
+        const container = document.getElementById("results");
+        if (!data || data.length === 0) {
+          container.innerHTML = "<p>نتیجه‌ای یافت نشد</p>";
+          return;
+        }
+        let html =
+          "<table><tr><th>id</th><th>keyword_id</th><th>rank/pos</th><th>url/title</th><th>checked_at</th></tr>";
+        data.forEach((r) => {
+          html += `<tr><td>${r.id}</td><td>${r.keyword_id}</td><td>${
+            r.rank || r.position || ""
+          }</td><td>${r.result_url || r.result_title || ""}</td><td>${
+            r.checked_at || ""
+          }</td></tr>`;
+        });
+        html += "</table>";
+        container.innerHTML = html;
+      }
+
+      document
+        .getElementById("refreshProjects")
+        .addEventListener("click", loadProjects);
+      document
+        .getElementById("refreshKeywords")
+        .addEventListener("click", loadKeywords);
+      document
+        .getElementById("refreshResults")
+        .addEventListener("click", loadResults);
+      document
+        .getElementById("newProject")
+        .addEventListener("click", async () => {
+          const name = document.getElementById("newProjectName").value;
+          const host = document.getElementById("newProjectDomain").value;
+          if (!name || !host) return alert("نام و دامنه لازم است");
+          await fetch(api("/projects"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, domain_host: host }),
+          });
+          await loadProjects();
+        });
+      document
+        .getElementById("addKeyword")
+        .addEventListener("click", async () => {
+          const pid = document.getElementById("projects").value;
+          const kw = document.getElementById("newKeywordText").value;
+          if (!pid || !kw) return alert("پروژه و کیورد لازم است");
+          await fetch(api(`/projects/${pid}/keywords`), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ keyword: kw }),
+          });
+          await loadKeywords();
+        });
+
+      // initial load
+      loadProjects();
+    </script>
+  </body>
+</html>

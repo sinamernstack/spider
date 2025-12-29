@@ -1,0 +1,43 @@
+<!-- @format -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test API</title>
+  </head>
+  <body>
+    <h1>Test API</h1>
+    <button onclick="createProject()">Create Project</button>
+    <button onclick="getProjects()">Get Projects</button>
+    <pre id="output"></pre>
+
+    <script>
+      async function createProject() {
+        const res = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "Test Digikala",
+            domain_host: "digikala.ir",
+          }),
+        });
+        const data = await res.text();
+        document.getElementById(
+          "output"
+        ).textContent = `${res.status}\n${data}`;
+      }
+
+      async function getProjects() {
+        const res = await fetch("/api/projects");
+        const data = await res.json();
+        document.getElementById("output").textContent = JSON.stringify(
+          data,
+          null,
+          2
+        );
+      }
+
+      getProjects();
+    </script>
+  </body>
+</html>

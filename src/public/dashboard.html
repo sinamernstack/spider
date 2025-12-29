@@ -1,0 +1,468 @@
+<!-- @format -->
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spider SEO Tracker - داشبورد</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+      header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+      header p {
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 30px;
+      }
+      .section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+      }
+      .section h2 {
+        font-size: 1.5em;
+        margin-bottom: 15px;
+        color: #333;
+      }
+
+      .form-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 10px;
+        margin-bottom: 15px;
+        align-items: flex-end;
+      }
+      .form-group.full {
+        grid-template-columns: 1fr auto;
+      }
+
+      input,
+      select,
+      button {
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1em;
+      }
+      input,
+      select {
+        background: white;
+        border-color: #ddd;
+      }
+      button {
+        background: #667eea;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+      }
+      button:hover {
+        background: #764ba2;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+      }
+      .btn-secondary:hover {
+        background: #5a6268;
+      }
+
+      select {
+        cursor: pointer;
+      }
+
+      .projects-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+      .project-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .project-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+      }
+      .project-card h3 {
+        color: #667eea;
+        margin-bottom: 10px;
+      }
+      .project-card p {
+        color: #666;
+        font-size: 0.9em;
+      }
+      .project-card.active {
+        border-color: #667eea;
+        background: #f0f5ff;
+      }
+
+      .results-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 0.95em;
+      }
+      .results-table th,
+      .results-table td {
+        padding: 12px;
+        text-align: right;
+        border-bottom: 1px solid #ddd;
+      }
+      .results-table th {
+        background: #667eea;
+        color: white;
+        font-weight: bold;
+      }
+      .results-table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .message {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .loading {
+        color: #667eea;
+        font-style: italic;
+      }
+
+      @media (max-width: 768px) {
+        .form-group {
+          grid-template-columns: 1fr;
+        }
+        .projects-list {
+          grid-template-columns: 1fr;
+        }
+        .results-table {
+          font-size: 0.85em;
+        }
+        header h1 {
+          font-size: 1.8em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🕷️ Spider</h1>
+        <p>پلتفرم ردگیری رتبهٔ SEO</p>
+      </header>
+
+      <div class="content">
+        <!-- Projects Section -->
+        <div class="section">
+          <h2>📊 پروژه‌ها</h2>
+          <div class="form-group full">
+            <div style="flex: 1">
+              <input
+                id="newProjectName"
+                type="text"
+                placeholder="نام پروژه (مثال: Digikala Tracker)"
+              />
+              <input
+                id="newProjectDomain"
+                type="text"
+                placeholder="دامنه (مثال: digikala.ir)"
+                style="margin-right: 10px"
+              />
+            </div>
+            <button onclick="addProject()">➕ پروژهٔ جدید</button>
+          </div>
+          <div id="projectsMessage"></div>
+          <div class="projects-list" id="projectsList"></div>
+        </div>
+
+        <!-- Keywords Section -->
+        <div class="section" id="keywordsSection" style="display: none">
+          <h2>🔍 کلمات کلیدی</h2>
+          <div class="form-group full">
+            <input
+              id="newKeywordText"
+              type="text"
+              placeholder="کیورد جدید (مثال: خرید لپ تاپ)"
+            />
+            <button onclick="addKeyword()" class="btn-secondary">
+              ➕ اضافه کنید
+            </button>
+          </div>
+          <div id="keywordsMessage"></div>
+          <select
+            id="keywordsList"
+            onchange="refreshResults()"
+            style="width: 100%; margin-top: 10px"
+          >
+            <option value="">— کلمهٔ کلیدی را انتخاب کنید —</option>
+          </select>
+        </div>
+
+        <!-- Results Section -->
+        <div class="section" id="resultsSection" style="display: none">
+          <h2>📈 نتایج</h2>
+          <div class="form-group full">
+            <div></div>
+            <button onclick="refreshResults()" class="btn-secondary">
+              🔄 بروزرسانی
+            </button>
+          </div>
+          <div id="resultsMessage"></div>
+          <div id="resultsContainer"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = "/api";
+      let selectedProjectId = null;
+
+      async function loadProjects() {
+        try {
+          const res = await fetch(`${API}/projects`);
+          const projects = await res.json();
+          const container = document.getElementById("projectsList");
+          container.innerHTML = "";
+
+          if (!projects || projects.length === 0) {
+            container.innerHTML =
+              '<p class="info" style="grid-column: 1/-1;">پروژه‌ای موجود نیست</p>';
+            return;
+          }
+
+          projects.forEach((p) => {
+            const card = document.createElement("div");
+            card.className =
+              "project-card" + (p.id === selectedProjectId ? " active" : "");
+            card.innerHTML = `<h3>${p.name}</h3><p>دامنه: ${
+              p.domain?.host || "نامشخص"
+            }</p>`;
+            card.onclick = () => selectProject(p.id);
+            container.appendChild(card);
+          });
+        } catch (err) {
+          showMessage("projectsMessage", `❌ خطا: ${err.message}`, "error");
+        }
+      }
+
+      function selectProject(id) {
+        selectedProjectId = id;
+        document.getElementById("keywordsSection").style.display = "block";
+        document.getElementById("resultsSection").style.display = "block";
+        loadProjects();
+        loadKeywords();
+        refreshResults();
+      }
+
+      async function addProject() {
+        const name = document.getElementById("newProjectName").value.trim();
+        const domain = document.getElementById("newProjectDomain").value.trim();
+        if (!name || !domain) {
+          showMessage("projectsMessage", "❌ نام و دامنه الزامی است", "error");
+          return;
+        }
+        try {
+          const res = await fetch(`${API}/projects`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, domain_host: domain }),
+          });
+          if (!res.ok) throw new Error("خطا در ایجاد پروژه");
+          document.getElementById("newProjectName").value = "";
+          document.getElementById("newProjectDomain").value = "";
+          showMessage(
+            "projectsMessage",
+            "✅ پروژه با موفقیت ایجاد شد",
+            "success"
+          );
+          loadProjects();
+        } catch (err) {
+          showMessage("projectsMessage", `❌ ${err.message}`, "error");
+        }
+      }
+
+      async function loadKeywords() {
+        if (!selectedProjectId) return;
+        try {
+          const res = await fetch(
+            `${API}/projects/${selectedProjectId}/keywords`
+          );
+          const keywords = await res.json();
+          const select = document.getElementById("keywordsList");
+          select.innerHTML =
+            '<option value="">— کلمهٔ کلیدی را انتخاب کنید —</option>';
+
+          if (keywords && keywords.length > 0) {
+            keywords.forEach((k) => {
+              const opt = document.createElement("option");
+              opt.value = k.id;
+              opt.textContent = k.keyword;
+              select.appendChild(opt);
+            });
+          }
+        } catch (err) {
+          showMessage("keywordsMessage", `❌ ${err.message}`, "error");
+        }
+      }
+
+      async function addKeyword() {
+        if (!selectedProjectId) {
+          showMessage(
+            "keywordsMessage",
+            "❌ ابتدا پروژه را انتخاب کنید",
+            "error"
+          );
+          return;
+        }
+        const kw = document.getElementById("newKeywordText").value.trim();
+        if (!kw) {
+          showMessage("keywordsMessage", "❌ کیورد الزامی است", "error");
+          return;
+        }
+        try {
+          const res = await fetch(
+            `${API}/projects/${selectedProjectId}/keywords`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ keyword: kw }),
+            }
+          );
+          if (!res.ok) throw new Error("خطا در اضافه کردن کیورد");
+          document.getElementById("newKeywordText").value = "";
+          showMessage("keywordsMessage", "✅ کیورد اضافه شد", "success");
+          loadKeywords();
+        } catch (err) {
+          showMessage("keywordsMessage", `❌ ${err.message}`, "error");
+        }
+      }
+
+      async function refreshResults() {
+        if (!selectedProjectId) return;
+        showMessage("resultsMessage", "بارگذاری...", "loading");
+        try {
+          const res = await fetch(
+            `${API}/results?project_id=${selectedProjectId}&limit=100`
+          );
+          const results = await res.json();
+          const container = document.getElementById("resultsContainer");
+
+          if (!results || results.length === 0) {
+            container.innerHTML = '<p class="info">نتیجهٔ موجود نیست</p>';
+            showMessage("resultsMessage", "نتایجی یافت نشد", "info");
+            return;
+          }
+
+          let html = `
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>شناسهٔ نتیجه</th>
+                <th>شناسهٔ کیورد</th>
+                <th>موقعیت/رتبه</th>
+                <th>عنوان</th>
+                <th>تاریخ بررسی</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+          results.forEach((r) => {
+            const date = r.checked_at
+              ? new Date(r.checked_at).toLocaleString("fa-IR")
+              : "—";
+            html += `
+            <tr>
+              <td>${r.id}</td>
+              <td>${r.keyword_id}</td>
+              <td>${r.rank || r.position || "—"}</td>
+              <td>${r.result_title || r.result_url || "—"}</td>
+              <td>${date}</td>
+            </tr>
+          `;
+          });
+
+          html += "</tbody></table>";
+          container.innerHTML = html;
+          showMessage(
+            "resultsMessage",
+            `✅ ${results.length} نتیجه بارگذاری شد`,
+            "success"
+          );
+        } catch (err) {
+          showMessage("resultsMessage", `❌ ${err.message}`, "error");
+        }
+      }
+
+      function showMessage(elementId, message, type) {
+        const el = document.getElementById(elementId);
+        if (type === "loading") {
+          el.innerHTML = `<p class="${type}">${message}</p>`;
+        } else {
+          el.innerHTML = `<p class="message ${type}">${message}</p>`;
+        }
+      }
+
+      // Initial load
+      loadProjects();
+    </script>
+  </body>
+</html>

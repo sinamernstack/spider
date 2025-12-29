@@ -1,0 +1,47 @@
+{
+  "name": "spider",
+  "version": "1.0.0",
+  "description": "SEO rank tracker scaffold (Express + TypeORM)",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "typeorm:sync": "ts-node -r tsconfig-paths/register src/scripts/sync-db.ts",
+    "migrate:run": "ts-node -r tsconfig-paths/register src/scripts/run-migrations.ts",
+    "check:infra": "ts-node -r tsconfig-paths/register src/scripts/health-check.ts",
+    "seed:sample": "ts-node -r tsconfig-paths/register src/scripts/seed-sample-data.ts",
+    "test:services": "ts-node -r tsconfig-paths/register src/scripts/test-services.ts",
+    "bootstrap:digikala": "ts-node -r tsconfig-paths/register src/scripts/bootstrap-digikala.ts",
+    "setup:all": "ts-node -r tsconfig-paths/register src/scripts/full-setup.ts",
+    "scheduler:local": "ts-node -r tsconfig-paths/register src/worker/scheduler-local.ts",
+    "worker:local": "ts-node -r tsconfig-paths/register src/worker/queue-local.ts",
+    "worker:start": "ts-node -r tsconfig-paths/register src/worker/queue.ts",
+    "scheduler:start": "ts-node -r tsconfig-paths/register src/worker/scheduler.ts",
+    "check:results": "ts-node -r tsconfig-paths/register src/scripts/check-results.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bullmq": "^5.66.4",
+    "cheerio": "^1.1.2",
+    "cron": "^2.3.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.0",
+    "redis": "^5.10.0",
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.3.17"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.1.6"
+  }
+}

@@ -422,7 +422,7 @@ npm run scheduler:start    # Start cron scheduler
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_USERNAME=postgres
-DATABASE_PASSWORD=faq666
+DATABASE_PASSWORD=postgres
 DATABASE_NAME=seo_rank
 
 # Redis

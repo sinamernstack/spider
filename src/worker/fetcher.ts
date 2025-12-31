@@ -1,5 +1,11 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import cheerio from 'cheerio';
+
+/**
+ * -------------------------
+ * Types
+ * -------------------------
+ */
 
 export type SerpResult = {
   position: number;
@@ -9,57 +15,180 @@ export type SerpResult = {
   is_ad?: boolean;
 };
 
-export async function fetchSERPByGoogle(keyword: string, options: { country?: string; language?: string; ua?: string; proxy?: string } = {}) {
+export type SerpOptions = {
+  country?: string;   // e.g. "us", "de"
+  language?: string;  // e.g. "en-US", "fa"
+  ua?: string;
+  proxy?: string;
+  timeout?: number;
+};
+
+/**
+ * -------------------------
+ * Constants
+ * -------------------------
+ */
+
+const DEFAULT_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+
+const GOOGLE_BASE = 'https://www.google.com/search';
+
+/**
+ * -------------------------
+ * Helpers
+ * -------------------------
+ */
+
+function buildGoogleUrl(keyword: string, opts: SerpOptions) {
   const q = encodeURIComponent(keyword);
-  const url = `https://www.google.com/search?q=${q}&num=10`;
-  const headers: Record<string, string> = {
-    'User-Agent': options.ua || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36',
+  const hl = opts.language || 'en';
+  const gl = opts.country || 'us';
+
+  return `${GOOGLE_BASE}?q=${q}&num=10&hl=${hl}&gl=${gl}`;
+}
+
+function isBlocked(html: string) {
+  return (
+    html.includes('Our systems have detected unusual traffic') ||
+    html.includes('/sorry/') ||
+    html.toLowerCase().includes('captcha')
+  );
+}
+
+/**
+ * -------------------------
+ * Google SERP Scraper (best-effort)
+ * -------------------------
+ */
+
+export async function fetchSERPByGoogle(
+  keyword: string,
+  options: SerpOptions = {}
+): Promise<SerpResult[]> {
+  const url = buildGoogleUrl(keyword, options);
+
+  const headers = {
+    'User-Agent': options.ua || DEFAULT_UA,
     'Accept-Language': options.language || 'en-US,en;q=0.9',
   };
 
-  const axiosOpts: any = { headers, timeout: 15000 };
-  if (options.proxy) axiosOpts.proxy = options.proxy;
+  const axiosOpts: AxiosRequestConfig = {
+    headers,
+    timeout: options.timeout ?? 15000,
+  };
 
-  const res = await axios.get(url, axiosOpts);
-  const html = res.data as string;
+  // optional proxy
+  if (options.proxy) {
+    axiosOpts.proxy = {
+      host: options.proxy.split(':')[0],
+      port: Number(options.proxy.split(':')[1]),
+    };
+  }
+
+  const res = await axios.get<string>(url, axiosOpts);
+  const html = res.data;
+
+  if (isBlocked(html)) {
+    throw new Error('Google blocked the request (captcha / unusual traffic)');
+  }
+
   const $ = cheerio.load(html);
   const results: SerpResult[] = [];
 
-  // Google's markup is complex; this is a best-effort parser for organic results
-  $('div.g').each((i, el) => {
-    const a = $(el).find('a').first();
-    const href = a.attr('href') || '';
-    const title = a.find('h3').text() || a.text() || undefined;
-    const snippet = $(el).find('.IsZvec').text() || $(el).find('.VwiC3b').text() || undefined;
-    if (!href) return;
-    results.push({ position: results.length + 1, url: href, title, snippet, is_ad: false });
+  /**
+   * Primary parser (organic results)
+   */
+  $('div.g').each((_, el) => {
+    if (results.length >= 10) return;
+
+    const link = $(el).find('a').first();
+    const href = link.attr('href');
+    if (!href || !href.startsWith('http')) return;
+
+    const title =
+      link.find('h3').text().trim() ||
+      $(el).find('h3').text().trim() ||
+      undefined;
+
+    const snippet =
+      $(el).find('.VwiC3b').text().trim() ||
+      $(el).find('.IsZvec').text().trim() ||
+      undefined;
+
+    results.push({
+      position: results.length + 1,
+      url: href,
+      title,
+      snippet,
+      is_ad: false,
+    });
   });
 
-  // fallback: parse search result links
+  /**
+   * Fallback parser
+   */
   if (results.length === 0) {
-    $('a').each((i, el) => {
+    $('a').each((_, el) => {
+      if (results.length >= 10) return;
+
       const href = $(el).attr('href');
-      if (href && href.startsWith('/url?q=')) {
-        const clean = href.replace('/url?q=', '').split('&')[0];
-        results.push({ position: results.length + 1, url: decodeURIComponent(clean) });
-      }
+      if (!href?.startsWith('/url?q=')) return;
+
+      const clean = href.replace('/url?q=', '').split('&')[0];
+      results.push({
+        position: results.length + 1,
+        url: decodeURIComponent(clean),
+      });
     });
   }
 
-  return results.slice(0, 10);
+  return results;
 }
 
-export async function fetchSERP(keyword: string, opts: any = {}) {
-  // If SERP_API_URL provided, prefer that (safer/legal)
+/**
+ * -------------------------
+ * Unified SERP fetcher
+ * Priority:
+ * 1) SERP API (legal & stable)
+ * 2) Google scraping (fallback)
+ * -------------------------
+ */
+
+export async function fetchSERP(
+  keyword: string,
+  options: SerpOptions = {}
+): Promise<SerpResult[]> {
+  /**
+   * If SERP API configured (recommended)
+   */
   if (process.env.SERP_API_URL) {
-    const apiKey = process.env.SERP_API_KEY;
-    const res = await axios.post(process.env.SERP_API_URL, { q: keyword, options: opts }, { headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : undefined, timeout: 20000 });
-    // expect provider to return results array
-    return res.data.results || [];
+    try {
+      const res = await axios.post(
+        process.env.SERP_API_URL,
+        {
+          q: keyword,
+          country: options.country,
+          language: options.language,
+        },
+        {
+          timeout: options.timeout ?? 20000,
+          headers: process.env.SERP_API_KEY
+            ? { Authorization: `Bearer ${process.env.SERP_API_KEY}` }
+            : undefined,
+        }
+      );
+
+      return res.data?.results ?? [];
+    } catch (err) {
+      console.warn('[SERP API FAILED] Falling back to Google scrape');
+    }
   }
 
-  // otherwise try fetching Google directly (best-effort)
-  return fetchSERPByGoogle(keyword, { language: opts.language, ua: opts.ua, proxy: opts.proxy });
+  /**
+   * Fallback: scrape Google directly
+   */
+  return fetchSERPByGoogle(keyword, options);
 }
 
 export default fetchSERP;

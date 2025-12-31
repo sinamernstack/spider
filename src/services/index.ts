@@ -4,6 +4,8 @@ import { Project } from '../entities/Project';
 import { Keyword } from '../entities/Keyword';
 import { RankCheck } from '../entities/RankCheck';
 import { RankResult } from '../entities/RankResult';
+export * from './serp.service';
+
 
 /**
  * Project Service - Business logic for projects

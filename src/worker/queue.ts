@@ -6,6 +6,7 @@ import { AppDataSource } from '../data-source';
 import { RankResult } from '../entities/RankResult';
 import { SerpSnapshot } from '../entities/SerpSnapshot';
 import fetchSERP from './fetcher';
+import { redis } from '@/infra/redis';
 
 dotenv.config();
 
@@ -17,7 +18,9 @@ const connection = new IORedis({
 
 export const rankQueue = new Queue('rank-checks', { connection });
 export const deadLetterQueue = new Queue('rank-checks-dlq', { connection });
-
+export const queue = new Queue('spider', {
+  connection: redis,
+});
 async function processJob(job: Job) {
   const data = job.data as any;
   console.log('Worker processing', job.id, data.project_id, data.keyword_id, data.keyword_text);
